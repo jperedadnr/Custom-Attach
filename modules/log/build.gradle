@@ -1,0 +1,13 @@
+repositories {
+    mavenCentral()
+    maven {
+        url = "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+}
+
+dependencies {
+    implementation "com.gluonhq.attach:util:4.0.12-SNAPSHOT"
+}
+
+ext.moduleName = 'org.jpereda.attach.log'
+ext.description = 'Common API to access log features'

@@ -1,0 +1,6 @@
+[
+  {
+    "name" : "org.jpereda.attach.log.impl.IOSLogService",
+    "methods":[{"name":"<init>","parameterTypes":[] }]
+  }
+]
