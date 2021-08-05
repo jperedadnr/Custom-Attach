@@ -1,12 +1,5 @@
-repositories {
-    mavenCentral()
-    maven {
-        url = "https://oss.sonatype.org/content/repositories/snapshots/"
-    }
-}
-
 dependencies {
-    implementation "com.gluonhq.attach:util:4.0.12-SNAPSHOT"
+    implementation "com.gluonhq.attach:util:$libraryVersions.attach"
 }
 
 ext.moduleName = 'org.jpereda.attach.log'

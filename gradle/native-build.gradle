@@ -13,6 +13,16 @@ def sdkPath(String platform) {
     return "/Applications/Xcode.app/Contents/Developer/Platforms/${platform}.platform/Developer/SDKs/${platform}${IOS_VERSION}.sdk";
 }
 
+configurations {
+    util
+}
+
+dependencies {
+    util ("com.gluonhq.attach:util:${libraryVersions.attach}:android") {
+        transitive = false
+    }
+}
+
 task androidBuild {
     group = "native"
     dependsOn build
@@ -75,7 +85,6 @@ task iosJar (type: Jar, dependsOn: iosBuild) {
 }
 
 task desktopBuild {
-    enabled = project.name != "util"
     group = "native"
     dependsOn build
     doLast {
@@ -85,7 +94,6 @@ task desktopBuild {
 }
 
 task desktopJar (type: Jar, dependsOn: desktopBuild) {
-    enabled = project.name != "util"
     group = "native"
 
     from projectClasses, projectResources, projectDesktopResources
@@ -141,36 +149,32 @@ ext.aarBuild = { buildDir, projectDir, name, os ->
         from sourcesDir
         into file("$tempDir/library/src/main/java/com/gluonhq/helloandroid")
     }
-    if (name != "Util") {
-        def util = file("$projectDir/../util/build/tmp/util_classes.jar")
-        if (!util.exists()) {
-            // compile util
-            File sourcesUtilDir = file("$projectDir/../util/src/main/native/$os/dalvik")
-            def javaSources = [sourcesUtilDir.listFiles()].flatten()
-            def javac = "$JAVAHOME/bin/javac"
-            def javacArgs = ["-d", file("$tempDir/classes").getAbsolutePath(),
-                             "-source", "1.7", "-target", "1.7",
-                             "-bootclasspath", androidJar,
-                             javaSources].flatten()
-            exec {
-                executable javac
-                args javacArgs
-            }
-            // create jar
-            def jar = "$JAVAHOME/bin/jar"
-            file(util.getParent()).mkdirs()
-            def jarArgs = ["cf", util.getAbsolutePath(), "-C",
-                           file("$tempDir/classes").getAbsolutePath(), "."].flatten()
-            exec {
-                executable jar
-                args jarArgs
-            }
-        }
-        // copy util jar
+    // util from Attach
+    def util = file("$projectDir/build/tmp/util_classes.jar")
+    if (!util.exists()) {
+        // find util classes jar
+        file(util.getParent()).mkdirs()
+
+        // find Util.aar
         project.copy {
-            from util
-            into file("$tempDir/libs")
+            into "$projectDir/build/tmp"
+            from({ project.zipTree(configurations.util.singleFile) }) {
+                include 'META-INF/substrate/dalvik/Util.aar'
+            }
         }
+        // extract classes.jar
+        def aarFile = file("$projectDir/build/tmp/META-INF/substrate/dalvik/Util.aar")
+        project.copy {
+            from project.zipTree(aarFile)
+            include 'classes.jar'
+            rename('classes.jar', "util_classes.jar")
+            into "$projectDir/build/tmp"
+        }
+    }
+    // copy util jar
+    project.copy {
+        from util
+        into file("$tempDir/libs")
     }
     // use build
     File build = file("$projectDir/src/main/resources/META-INF/substrate/dalvik/build.gradle")
@@ -359,8 +363,7 @@ ext.nativeBuildLib = { buildDir, projectDir, name, os ->
         def linker = file("$compilerHome/bin/llvm-ar").getAbsolutePath()
 
         osIncludeFlags = ["-I$JAVAHOME/include/$host",
-                          "-I$projectDir/../../gradle/include/android",
-                          "-I$projectDir/../util/src/main/native/$os/c"].flatten()
+                          "-I$projectDir/../../gradle/include/android"].flatten()
 
         File nativeSourcesDir = file("$projectDir/src/main/native/$os/c/")
         osSources = [nativeSourcesDir.listFiles().findAll {it.name.endsWith(".c")}].flatten()
