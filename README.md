@@ -23,10 +23,15 @@ These are the requisites:
 * A recent version of [JDK 11](http://jdk.java.net/11/)
 * Gradle 6.0 or superior. 
 
-To build the iOS Services:
+To build the iOS services:
  
 * A Mac with with MacOS X 10.14.4 or superior
-* XCode 11.x or superior
+* Xcode 11.x or superior
+
+To build the Android services:
+
+* Android SDK and Android NDK
+(The GluonFX plugin installs both when building for Android)
 
 ### How to build and install Attach ###
 
